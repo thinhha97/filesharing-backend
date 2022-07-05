@@ -18,7 +18,7 @@ router.post('/signup', async (req, res) => {
       })
       await newUser.save()
       // TODO: email verification link to user's email.
-      res.status(201).json({ id: newUser._id, email })
+      res.status(201).json({message: 'Account created successfully', email })
     } else {
       res.status(409).json({
         message: 'An user is already existed with provided email address.',
