@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
         if (err) {
           console.error(err)
         }
-        const user = await User.findById(id)
+        const user = await User.findById(data)
         if (user === null) {
           res.status(401).json({ message: 'Invalid token provided' })
         } else {
