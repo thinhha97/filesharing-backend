@@ -25,6 +25,7 @@
     "$root": ".",
     "$middlewares": "./middlewares",
     "$models": "./models",
+    "$dtoMongoose": "./dto/mongoose",
     "$routes": "./routes"
   }
 }
