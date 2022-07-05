@@ -17,7 +17,7 @@ router.post('/signup', async (req, res) => {
         passwords: [hashedPassword],
       })
       await newUser.save()
-      console.log(newUser)
+      // TODO: email verification link to user's email.
       res.status(201).json({ id: newUser._id, email })
     } else {
       res.status(409).json({
@@ -46,6 +46,8 @@ router.post('/signin', async (req, res) => {
         res.status(401).json({ message: 'Invalid password' })
       } else {
         const token = jwt.sign(user._id.toString(), JWT_SECRET)
+        user.lastSignin = new Date()
+        await user.save()
         res.status(200).json({ message: 'Successfully signing in', token })
       }
     }
