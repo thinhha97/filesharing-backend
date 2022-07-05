@@ -9,11 +9,7 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password } = req.body
     const user = await User.findOne({ email })
-    if (user !== null) {
-      res.status(409).json({
-        message: 'An user is already existed with provided email address.',
-      })
-    } else {
+    if (user === null) {
       const salt = await bcrypt.genSalt(12)
       const hashedPassword = await bcrypt.hash(password, salt)
       const newUser = new User({
@@ -23,6 +19,10 @@ router.post('/signup', async (req, res) => {
       await newUser.save()
       console.log(newUser)
       res.status(201).json({ id: newUser._id, email })
+    } else {
+      res.status(409).json({
+        message: 'An user is already existed with provided email address.',
+      })
     }
   } catch (err) {
     console.error('Error at /api/v1/user/signup')
