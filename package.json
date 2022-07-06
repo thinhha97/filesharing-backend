@@ -27,6 +27,7 @@
     "$middlewares": "./middlewares",
     "$models": "./models",
     "$dtoMongoose": "./dto/mongoose",
+    "$dtoMulterS3": "./dto/multerS3",
     "$routes": "./routes"
   }
 }
