@@ -53,37 +53,73 @@ router.post('/reset', async (req, res) => {
   try {
     const { email, re } = req.body
     if (!email) {
-      return res.status(400).json({message: 'Email address required'})
+      return res.status(400).json({ message: 'Email address required' })
     }
-    const user = await User.findOne({email})
+    const user = await User.findOne({ email })
     if (user === null) {
-      return res.status(404).json({message: 'An user with provided email does not exist'})
+      return res
+        .status(404)
+        .json({ message: 'An user with provided email does not exist' })
     }
-    const existingDocument = await Token.findOne({userId: user._id})
+    const existingDocument = await Token.findOne({ userId: user._id })
     if (existingDocument) {
       if (!re) {
-        return res.status(425).json({message: `The password reset link has already been sent. Provide field re=true in req body to resent.`})
+        return res.status(425).json({
+          message: `The password reset link has already been sent. Provide field re=true in req body to resent.`,
+        })
       } else {
         existingDocument.createdAt = Date.now()
         await existingDocument.save()
         // TODO: send password reset link, again
-        return res.status(200).json({message: 'Password reset link resent'})
+        return res.status(200).json({ message: 'Password reset link resent' })
       }
     }
     const token = crypto.randomBytes(32).toString('hex')
     const tokenDoc = new Token({
       userId: user._id,
-      token
+      token,
     })
     await tokenDoc.save()
     const link = `${req.protocol}://${req.hostname}/password-reset/${user._id}/${token}`
     console.log(link)
     // TODO: email reset link to user's email address
-    return res.status(200).json({message: 'Password reset link sent'})
+    return res.status(200).json({ message: 'Password reset link sent' })
   } catch (err) {
     console.error('Error at /api/v1/user/password/reset')
     console.error(err)
     res.status(500).json({ message: 'Internal Server Error' })
+  }
+})
+
+router.post('/reset/:userId/:token', async (req, res) => {
+  try {
+    const { userId, token } = req.params
+    const { password } = req.body
+    if (!password) {
+      return res.status(400).json({message: 'Password is required'})
+    }
+    const user = await User.findById(userId)
+    if (user) {
+      const tokenDocument = await Token.findOne({ userId })
+      const isValidToken = tokenDocument && tokenDocument.token === token
+      if (isValidToken) {
+        const salt = await bcrypt.genSalt(BCRYPT_SALT)
+        const hashedPassword = await bcrypt.hash(password, salt)
+        user.passwords.unshift(hashedPassword)
+        await user.save()
+        await tokenDocument.delete()
+        // TODO: email user that password has changed
+        return res.status(200).json({message: 'Password changed'})
+      } else {
+        return res.status(401).json({message: 'Invalid or exprired token'})
+      }
+    } else {
+      return res.status(404).json({ message: 'User not found' })
+    }
+  } catch (err) {
+    console.error('Error at /api/v1/user/password/reset/:userId/:token')
+    console.error(err)
+    return res.status(500).json({ message: 'Internal Server Error' })
   }
 })
 
