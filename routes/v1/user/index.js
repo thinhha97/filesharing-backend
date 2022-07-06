@@ -4,13 +4,14 @@ const User = require('$models/user')
 const jwt = require('jsonwebtoken')
 
 const JWT_SECRET = process.env.JWT_SECRET
+const BCRYPT_SALT = parseInt(process.env.BCRYPT_SALT)
 
 router.post('/signup', async (req, res) => {
   try {
     const { email, password } = req.body
     const user = await User.findOne({ email })
     if (user === null) {
-      const salt = await bcrypt.genSalt(12)
+      const salt = await bcrypt.genSalt(BCRYPT_SALT)
       const hashedPassword = await bcrypt.hash(password, salt)
       const newUser = new User({
         email,
@@ -75,5 +76,7 @@ router.post('/verify/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', err: `${err}` })
   }
 })
+
+router.use('/password', require('./password'))
 
 module.exports = router
