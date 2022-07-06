@@ -1,7 +1,9 @@
 const router = require('express').Router()
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const authenticate = require('$middlewares/authenticate')
 const User = require('$models/user')
+const Token = require('$models/token')
 
 const BCRYPT_SALT = parseInt(process.env.BCRYPT_SALT)
 
@@ -42,6 +44,44 @@ router.put('/change', authenticate, async (req, res) => {
     }
   } catch (err) {
     console.error('Error changing password at /api/v1/user/password/change')
+    console.error(err)
+    res.status(500).json({ message: 'Internal Server Error' })
+  }
+})
+
+router.post('/reset', async (req, res) => {
+  try {
+    const { email, re } = req.body
+    if (!email) {
+      return res.status(400).json({message: 'Email address required'})
+    }
+    const user = await User.findOne({email})
+    if (user === null) {
+      return res.status(404).json({message: 'An user with provided email does not exist'})
+    }
+    const existingDocument = await Token.findOne({userId: user._id})
+    if (existingDocument) {
+      if (!re) {
+        return res.status(425).json({message: `The password reset link has already been sent. Provide field re=true in req body to resent.`})
+      } else {
+        existingDocument.createdAt = Date.now()
+        await existingDocument.save()
+        // TODO: send password reset link, again
+        return res.status(200).json({message: 'Password reset link resent'})
+      }
+    }
+    const token = crypto.randomBytes(32).toString('hex')
+    const tokenDoc = new Token({
+      userId: user._id,
+      token
+    })
+    await tokenDoc.save()
+    const link = `${req.protocol}://${req.hostname}/password-reset/${user._id}/${token}`
+    console.log(link)
+    // TODO: email reset link to user's email address
+    return res.status(200).json({message: 'Password reset link sent'})
+  } catch (err) {
+    console.error('Error at /api/v1/user/password/reset')
     console.error(err)
     res.status(500).json({ message: 'Internal Server Error' })
   }
