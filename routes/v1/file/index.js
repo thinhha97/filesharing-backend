@@ -12,6 +12,7 @@ router.post(
     try {
       let result = []
       const user = await User.findById(req.userId)
+      console.log(req)
       const saveFilesInfo = new Promise((resolve, reject) => {
         req.files.forEach(async (f) => {
           let file = new File({
