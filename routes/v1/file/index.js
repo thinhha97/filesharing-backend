@@ -10,9 +10,11 @@ router.post(
   upload.array('files'),
   async (req, res) => {
     try {
+      if (!req.files) {
+        return res.status(400).json({message: 'Must provide form-data with \`files\` field'})
+      }
       let result = []
       const user = await User.findById(req.userId)
-      console.log(req)
       const saveFilesInfo = new Promise((resolve, reject) => {
         req.files.forEach(async (f) => {
           let file = new File({
