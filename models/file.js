@@ -6,6 +6,10 @@ const fileSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    key: {
+      type: String,
+      required: true
+    },
     size: Number,
     type: String,
     uploader: {
@@ -27,6 +31,9 @@ const fileSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    deletedAt: {
+      type: Date
+    }
   },
   { timestamps: true }
 )
